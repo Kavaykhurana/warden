@@ -1,0 +1,9 @@
+spring:
+  ai:
+    model.chat: none
+    google.genai.api-key: test-key-never-used
+warden:
+  jwt.secret: dGVzdC1vbmx5LXNlY3JldC10aGF0LWlzLWF0LWxlYXN0LTI1Ni1iaXRzLWxvbmctMTIzNDU2
+  seed-demo-data: true
+logging.level:
+  edu.ashbrook.warden.ai.ToolGuard: OFF

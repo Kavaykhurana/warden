@@ -8,3 +8,4 @@ graphify-out/
 .DS_Store
 *.tsbuildinfo
 .idea/
+/.env

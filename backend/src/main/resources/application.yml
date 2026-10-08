@@ -1,0 +1,43 @@
+spring:
+  application.name: warden
+  config.import: optional:file:.env[.properties]
+  threads.virtual.enabled: true
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/warden}
+    username: ${DATABASE_USERNAME:warden}
+    password: ${DATABASE_PASSWORD:warden}
+  jpa:
+    hibernate.ddl-auto: validate
+    open-in-view: false
+  flyway.enabled: true
+  ai:
+    model.chat: google-genai
+    google.genai:
+      api-key: ${GEMINI_API_KEY}
+      chat:
+        model: ${GEMINI_MODEL:gemini-2.5-flash}
+        temperature: 0.2
+        max-output-tokens: 800
+        thinking-budget: 0
+
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+  error.include-stacktrace: never
+
+management.endpoints.web.exposure.include: health
+
+logging.pattern.level: "%5p [%X{requestId:-}]"
+
+warden:
+  timezone: Asia/Kolkata
+  semester: ODD-2026
+  jwt:
+    secret: ${JWT_SECRET}
+    access-ttl: 15m
+  refresh:
+    ttl: 7d
+    cookie-secure: ${COOKIE_SECURE:false}
+  approvals.ttl: 48h
+  ai.timeout: 45s
+  seed-demo-data: ${SEED_DEMO_DATA:true}

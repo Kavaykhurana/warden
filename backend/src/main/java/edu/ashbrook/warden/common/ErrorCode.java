@@ -1,0 +1,5 @@
+package edu.ashbrook.warden.common;
+
+public enum ErrorCode {
+    VALIDATION_FAILED, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, CONFLICT, BUSINESS_RULE, RATE_LIMITED, AI_UNAVAILABLE, INTERNAL
+}
