@@ -1,0 +1,13 @@
+warden:
+  refresh:
+    cookie-secure: true
+
+spring:
+  flyway.enabled: true
+
+springdoc:
+  api-docs.enabled: false
+  swagger-ui.enabled: false
+
+logging.level:
+  root: INFO
