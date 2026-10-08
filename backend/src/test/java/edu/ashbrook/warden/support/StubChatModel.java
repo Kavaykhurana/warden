@@ -9,7 +9,9 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
 /** A programmable model: tests script the responses, so Gemini is never called. */
 public class StubChatModel implements ChatModel {
@@ -25,6 +27,12 @@ public class StubChatModel implements ChatModel {
         calls.incrementAndGet();
         prompts.add(prompt);
         return behaviour.apply(prompt);
+    }
+
+    /** Like the real Gemini model, advertise tool-calling options so the client attaches the tools. */
+    @Override
+    public ChatOptions getOptions() {
+        return ToolCallingChatOptions.builder().build();
     }
 
     public void respond(Function<Prompt, ChatResponse> behaviour) {
