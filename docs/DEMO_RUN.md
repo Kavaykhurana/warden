@@ -31,3 +31,16 @@ reproduced in prose below; the UI was also checked in a real browser (Playwright
   quota resets: `./mvnw verify -Plive -Dit.test=InjectionRedTeamLiveIT`.
 - **Frontend console.** The only console error is React's missing-`key` warning from `OverviewPage`'s stat tiles — a
   rendering detail in page code, outside the API wiring this project is allowed to change.
+
+## Production check (8 October 2026)
+
+Against <https://warden-mauve.vercel.app> (Vercel → Render → Neon), read-only so the seeded demo state stays intact:
+
+| Check | Result |
+|---|---|
+| `/actuator/health` on Render | ✅ `UP`; Swagger and `/v3/api-docs` return 404 under the `prod` profile |
+| Seed on Neon | ✅ 11 users; audit chain `intact` (25 events after one sign-in) |
+| SPA and deep links via Vercel | ✅ `/` and `/approvals` return 200 |
+| Sign-in through the `/api` rewrite | ✅ `warden_rt` set on the Vercel origin, `Secure`, `HttpOnly`, `Path=/api/auth` |
+| Full page reload | ✅ session restored from the refresh cookie (same-origin, `SameSite=Strict`) |
+| Meera's duty leave page | ✅ Aarav's reason marked "Contains instruction-like text" with Approve/Reject; Isha's shows "Needs head of department" and no buttons |

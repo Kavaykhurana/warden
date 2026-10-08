@@ -10,6 +10,9 @@ provably logged.
 
 Java 21 · Spring Boot 4.1 · Spring Security 7 · Spring AI 2.0 (Gemini) · PostgreSQL 16 · React 18 + TypeScript
 
+**Live demo:** <https://warden-mauve.vercel.app> (sign in with any demo account below; the backend sleeps when idle,
+so the first request can take about 50 seconds) · API: <https://warden-api-v9j3.onrender.com/actuator/health>
+
 ---
 
 ## How a chat turn flows
@@ -137,6 +140,9 @@ attackers, controls and the tests that prove them in [`docs/THREAT_MODEL.md`](do
 - The rate limiter, active-user cache and in-flight chat guard are in memory: a single instance only.
 - No holiday calendar; working days are Monday to Friday.
 - HS256 with one shared secret; rotating it signs everyone out.
+- In production every request reaches Render through Vercel, so the backend sees Vercel's IP: the five-per-minute
+  sign-in limit is shared by visitors behind the same Vercel edge. Trusting Vercel's forwarded header instead would
+  let anyone who calls the Render URL directly spoof their IP.
 - Free-tier Gemini quotas are small; the assistant answers 503 when the quota is spent, and the rest of the app keeps
   working.
 
@@ -180,3 +186,7 @@ to the Render host (same-origin, so the `SameSite=Strict` refresh cookie works a
 `JWT_SECRET` (a new one), `GEMINI_API_KEY`, `GEMINI_MODEL`, `COOKIE_SECURE=true`, `SEED_DEMO_DATA=true`,
 `SPRING_PROFILES_ACTIVE=prod`; health check `/actuator/health`. Render's free instance sleeps when idle, so the first
 request after a while takes about 50 seconds.
+
+Deployed: frontend <https://warden-mauve.vercel.app> (Vercel, root `frontend`), backend
+<https://warden-api-v9j3.onrender.com> (Render, Singapore), database on Neon (Singapore). Pushes to `main` redeploy
+both.
