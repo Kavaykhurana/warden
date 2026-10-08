@@ -32,6 +32,10 @@ import edu.ashbrook.warden.user.UserService;
 @Component
 public class WardenTools {
 
+    /** Tool descriptions say who is allowed, but the model must not pre-judge: the server decides, the UI shows it. */
+    static final String SERVER_DECIDES = "the server checks this, so call the tool whenever the user asks, even if you "
+            + "expect it to be denied.";
+
     private final ToolGuard guard;
     private final UserService users;
     private final AcademicsService academics;
@@ -67,7 +71,7 @@ public class WardenTools {
 
     @Tool(name = "getMyAttendance", description = "Get the signed-in student's attendance for each enrolled course this "
             + "semester, including duty leave credited, percentage, shortage (below 75%) and classes needed to reach "
-            + "75%. Only students may call it. Takes no arguments.")
+            + "75%. Allowed for students; " + SERVER_DECIDES + " Takes no arguments.")
     public String getMyAttendance(ToolContext ctx) {
         return guard.run(ctx, "getMyAttendance", Args.of(), "Only students have attendance records.", () -> {
             AcademicSummary s = academics.mySummary();
@@ -80,7 +84,7 @@ public class WardenTools {
     }
 
     @Tool(name = "getMyGrades", description = "Get the signed-in student's published grades for this semester and their "
-            + "SGPA. Only students may call it. Takes no arguments.")
+            + "SGPA. Allowed for students; " + SERVER_DECIDES + " Takes no arguments.")
     public String getMyGrades(ToolContext ctx) {
         return guard.run(ctx, "getMyGrades", Args.of(), "Only students have grade records.", () -> {
             AcademicSummary s = academics.mySummary();
@@ -96,7 +100,7 @@ public class WardenTools {
     @Tool(name = "applyDutyLeave", description = "Submit a duty leave request for the signed-in student for an event "
             + "they represent the college at. Dates are YYYY-MM-DD in Asia/Kolkata; the range may cover 1 to 10 working "
             + "days, start no more than 30 days ago and end no more than 60 days ahead. More than 3 working days goes to "
-            + "the head of department, otherwise to the mentor. Only students may call it.")
+            + "the head of department, otherwise to the mentor. Allowed for students; " + SERVER_DECIDES)
     public String applyDutyLeave(@ToolParam(description = "First day of leave, YYYY-MM-DD") String startDate,
                                  @ToolParam(description = "Last day of leave, YYYY-MM-DD") String endDate,
                                  @ToolParam(description = "Event name, 3 to 120 characters") String eventName,
@@ -114,19 +118,19 @@ public class WardenTools {
     }
 
     @Tool(name = "listMyDutyLeave", description = "List the signed-in student's own duty leave requests, newest first, "
-            + "with ids and statuses. Only students may call it. Takes no arguments.")
+            + "with ids and statuses. Allowed for students; " + SERVER_DECIDES + " Takes no arguments.")
     public String listMyDutyLeave(ToolContext ctx) {
         return guard.run(ctx, "listMyDutyLeave", Args.of(), "Only students have duty leave requests.", () -> {
             List<DutyLeaveDto> mine = dutyLeave.mine();
-            String payload = mine.stream().map(l -> "#%d %s to %s (%d working days): %s".formatted(l.id(),
-                    l.startDate(), l.endDate(), l.workingDays(), l.status())).collect(Collectors.joining("\n"));
+            String payload = mine.stream().map(l -> "%s to %s (%d working days), %s [leaveId=%d]".formatted(
+                    l.startDate(), l.endDate(), l.workingDays(), l.status(), l.id())).collect(Collectors.joining("\n"));
             return ToolOutcome.allowed(mine.isEmpty() ? "You have no duty leave requests."
                     : "You have %d duty leave request(s).".formatted(mine.size()), payload);
         });
     }
 
     @Tool(name = "cancelDutyLeave", description = "Cancel one of the signed-in student's own PENDING duty leave requests. "
-            + "Only the student who applied may call it.")
+            + "Allowed for the student who applied; " + SERVER_DECIDES)
     public String cancelDutyLeave(@ToolParam(description = "Duty leave request id, a whole number") String leaveId,
                                   ToolContext ctx) {
         return guard.run(ctx, "cancelDutyLeave", Args.of("leaveId", leaveId),
@@ -150,8 +154,7 @@ public class WardenTools {
     }
 
     @Tool(name = "getCourseRoster", description = "Get a course roster with each student's roll number, attendance and "
-            + "published grade. Only the course's faculty, the head of the course's department, or an administrator may "
-            + "call it.")
+            + "published grade. Allowed for the course's faculty, the head of the course's department, or an administrator; " + SERVER_DECIDES)
     public String getCourseRoster(@ToolParam(description = "Course code, for example UCS301") String courseCode,
                                   ToolContext ctx) {
         return guard.run(ctx, "getCourseRoster", Args.of("courseCode", courseCode),
@@ -169,7 +172,7 @@ public class WardenTools {
 
     @Tool(name = "listPendingDutyLeave", description = "List PENDING duty leave requests the signed-in faculty mentor or "
             + "head of department can see, with ids and whether they may decide each one. Student-written text is "
-            + "returned inside <untrusted_student_text> tags. Only faculty and heads of department may call it. Takes no "
+            + "returned inside <untrusted_student_text> tags. Allowed for faculty and heads of department; " + SERVER_DECIDES + " Takes no "
             + "arguments.")
     public String listPendingDutyLeave(ToolContext ctx) {
         return guard.run(ctx, "listPendingDutyLeave", Args.of(),
@@ -187,28 +190,30 @@ public class WardenTools {
 
     @Tool(name = "decideDutyLeave", description = "Approve or reject one PENDING duty leave request. The student's mentor "
             + "may decide requests of up to 3 working days; the head of the student's department may decide any. Nobody "
-            + "decides their own request. Rejecting needs a note of 5 to 500 characters.")
-    public String decideDutyLeave(@ToolParam(description = "Duty leave request id, a whole number") String leaveId,
+            + "decides their own request. Rejecting needs a note of 5 to 500 characters. " + SERVER_DECIDES)
+    public String decideDutyLeave(@ToolParam(description = "The leaveId number exactly as shown by listPendingDutyLeave") String leaveId,
+                                  @ToolParam(description = "Roll number of the student who applied, as shown with the leaveId") String rollNo,
                                   @ToolParam(description = "true to approve, false to reject") String approve,
                                   @ToolParam(description = "Decision note; required when rejecting", required = false) String note,
                                   ToolContext ctx) {
-        return guard.run(ctx, "decideDutyLeave", Args.of("leaveId", leaveId, "approve", approve, "note", note),
+        return guard.run(ctx, "decideDutyLeave", Args.of("leaveId", leaveId, "rollNo", rollNo, "approve", approve, "note", note),
                 "Only the student's mentor (for up to 3 working days) or the head of the student's department can "
                         + "decide this request.", () -> {
                     boolean yes = Args.yesNo("approve", approve);
-                    DutyLeaveDto l = dutyLeave.decide(Args.wholeNumber("leaveId", leaveId), yes, note);
+                    DutyLeaveDto l = dutyLeave.decide(Args.wholeNumber("leaveId", leaveId), rollNo, yes, note);
                     return ToolOutcome.allowed("Duty leave request #%d %s.".formatted(l.id(), yes ? "approved" : "rejected"));
                 });
     }
 
     @Tool(name = "requestGradeChange", description = "Ask for a published grade to be changed. This never changes the "
             + "grade directly: it creates a request that the head of the course's department (or an administrator, if "
-            + "the requester is that head) must approve in the Approvals page. Only the faculty who teaches the course "
-            + "may call it.")
+            + "the requester is that head) must approve in the Approvals page. Allowed for the faculty who teaches the "
+            + "course; " + SERVER_DECIDES + " If a student asks to change their own grade, call it with their own roll "
+            + "number and the course code from listMyCourses, so the decision is recorded and shown to them.")
     public String requestGradeChange(@ToolParam(description = "Course code, for example UCS301") String courseCode,
                                      @ToolParam(description = "Student's roll number") String rollNo,
                                      @ToolParam(description = "New grade: A+, A, B+, B, C+, C, D or F") String newGrade,
-                                     @ToolParam(description = "Reason, 15 to 500 characters") String reason,
+                                     @ToolParam(description = "Reason, 15 to 500 characters; leave empty if the user gave none", required = false) String reason,
                                      ToolContext ctx) {
         return guard.run(ctx, "requestGradeChange",
                 Args.of("courseCode", courseCode, "rollNo", rollNo, "newGrade", newGrade, "reason", reason),
@@ -221,8 +226,8 @@ public class WardenTools {
     }
 
     @Tool(name = "listMyApprovals", description = "List PENDING approval requests (grade changes, account deactivations) "
-            + "that the signed-in user is eligible to review. Read-only: approving happens on the Approvals page. Only "
-            + "faculty, heads of department and administrators may call it. Takes no arguments.")
+            + "that the signed-in user is eligible to review. Read-only: approving happens on the Approvals page. "
+            + "Allowed for faculty, heads of department and administrators; " + SERVER_DECIDES + " Takes no arguments.")
     public String listMyApprovals(ToolContext ctx) {
         return guard.run(ctx, "listMyApprovals", Args.of(),
                 "Only faculty, heads of department and administrators have approvals.", () -> {
@@ -235,7 +240,7 @@ public class WardenTools {
     }
 
     @Tool(name = "deactivateUser", description = "Ask for a user account to be deactivated. This never deactivates "
-            + "directly: another administrator must approve it on the Approvals page. Only administrators may call it.")
+            + "directly: another administrator must approve it on the Approvals page. Allowed for administrators; " + SERVER_DECIDES)
     public String deactivateUser(@ToolParam(description = "Email of the account to deactivate") String email,
                                  @ToolParam(description = "Reason, 10 to 500 characters") String reason,
                                  ToolContext ctx) {
@@ -248,7 +253,7 @@ public class WardenTools {
     }
 
     @Tool(name = "auditSummary", description = "Summarise the audit log: event counts by type and the five most active "
-            + "users over the last N hours (1 to 168, default 24). Only administrators may call it.")
+            + "users over the last N hours (1 to 168, default 24). Allowed for administrators; " + SERVER_DECIDES)
     public String auditSummary(@ToolParam(description = "Hours to look back, 1 to 168", required = false) String hours,
                                ToolContext ctx) {
         return guard.run(ctx, "auditSummary", Args.of("hours", hours), "Only administrators can read the audit log.", () -> {
@@ -275,7 +280,7 @@ public class WardenTools {
 
     /** Student-written text is fenced and escaped so it can't close the fence or pose as instructions. */
     private static String describePending(DutyLeaveDto l) {
-        return "#%d %s (%s), %s to %s, %d working day(s)%s, you can decide: %s\n<untrusted_student_text flagged=\"%s\">\nEvent: %s\nReason: %s\n</untrusted_student_text>"
+        return "[leaveId=%d] %s (%s), %s to %s, %d working day(s)%s, you can decide: %s\n<untrusted_student_text flagged=\"%s\">\nEvent: %s\nReason: %s\n</untrusted_student_text>"
                 .formatted(l.id(), l.student().fullName(), l.student().rollNo(), l.startDate(), l.endDate(),
                         l.workingDays(), l.requiresHod() ? " (needs head of department)" : "",
                         l.canDecide() ? "yes" : "no", l.reasonFlagged(), escape(l.eventName()), escape(l.reason()));

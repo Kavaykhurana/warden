@@ -57,7 +57,7 @@ public abstract class IntegrationTest {
     protected JdbcTemplate jdbc;
     @Autowired
     protected JsonMapper json;
-    @Autowired
+    @Autowired(required = false)
     protected StubChatModel model;
     @Autowired
     private TokenService tokens;

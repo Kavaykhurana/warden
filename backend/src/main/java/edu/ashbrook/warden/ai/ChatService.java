@@ -186,12 +186,13 @@ public class ChatService {
                 .collect(Collectors.joining(", ")) + "]";
     }
 
+    /** Provider status for the log (e.g. a 429 quota message) — never the prompt or the user's text. */
     private static String rootMessage(Throwable e) {
         Throwable root = e;
         while (root.getCause() != null) {
             root = root.getCause();
         }
-        return root.getClass().getSimpleName();
+        return root.getClass().getSimpleName() + ": " + Text.truncate(root.getMessage(), 200);
     }
 
     @PreDestroy

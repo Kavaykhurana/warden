@@ -150,6 +150,23 @@ public class DutyLeaveService {
     @PreAuthorize("hasAnyRole('FACULTY','HOD') and @dutyLeaveSecurity.canDecide(#id, authentication)")
     @Transactional
     public DutyLeaveDto decide(Long id, boolean approve, String note) {
+        return decideChecked(id, null, approve, note);
+    }
+
+    /**
+     * AI path: the model must also name the student. A model that copies the wrong leave id would otherwise decide
+     * another of the reviewer's students' requests; a mismatch fails instead.
+     */
+    @PreAuthorize("hasAnyRole('FACULTY','HOD') and @dutyLeaveSecurity.canDecide(#id, authentication)")
+    @Transactional
+    public DutyLeaveDto decide(Long id, String expectedRollNo, boolean approve, String note) {
+        if (Text.trim(expectedRollNo).isEmpty()) {
+            throw new FieldValidationException("rollNo", "Give the student's roll number with the leave id.");
+        }
+        return decideChecked(id, Text.trim(expectedRollNo), approve, note);
+    }
+
+    private DutyLeaveDto decideChecked(Long id, String expectedRollNo, boolean approve, String note) {
         String cleanNote = Text.blankToNull(note);
         if (!approve && (cleanNote == null || !Text.lengthBetween(cleanNote, 5, 500))) {
             throw new FieldValidationException("note", "Give a reason of 5 to 500 characters.");
@@ -158,6 +175,9 @@ public class DutyLeaveService {
             throw new FieldValidationException("note", "Keep the note to 500 characters or fewer.");
         }
         DutyLeaveRequest leave = leaves.findForUpdate(id).orElseThrow(DutyLeaveService::notFound);
+        if (expectedRollNo != null && !expectedRollNo.equals(leave.getStudent().getRollNo())) {
+            throw new BusinessRuleException("Leave request #" + id + " belongs to a different student. Check the leaveId.");
+        }
         if (leave.getStatus() != LeaveStatus.PENDING) {
             throw new ConflictException("This request was already decided.");
         }

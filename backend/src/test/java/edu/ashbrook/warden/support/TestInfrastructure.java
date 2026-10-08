@@ -3,6 +3,7 @@ package edu.ashbrook.warden.support;
 import java.time.Clock;
 import java.time.Instant;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -29,7 +30,9 @@ public class TestInfrastructure {
         return Clock.fixed(NOW, ClockConfig.ZONE);
     }
 
+    /** Replaced by the real Gemini model only in live tests, which set {@code spring.ai.model.chat=google-genai}. */
     @Bean
+    @ConditionalOnProperty(name = "spring.ai.model.chat", havingValue = "none")
     StubChatModel stubChatModel() {
         return new StubChatModel();
     }

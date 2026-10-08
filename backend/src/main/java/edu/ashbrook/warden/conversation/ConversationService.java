@@ -109,7 +109,7 @@ public class ConversationService {
     static String titleFrom(String text) {
         String flat = text.strip().replaceAll("\\s+", " ");
         String cut = flat.length() > TITLE_FROM_MESSAGE ? flat.substring(0, TITLE_FROM_MESSAGE) : flat;
-        String title = cut.strip().replaceAll("[\\p{Punct}\\s]+$", "");
+        String title = cut.strip().replaceAll("[.,;:!?…\\s]+$", "");
         return title.isEmpty() ? Conversation.DEFAULT_TITLE : title;
     }
 
