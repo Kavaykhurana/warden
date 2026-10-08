@@ -1,0 +1,10 @@
+backend/.env
+frontend/.env.local
+target/
+node_modules/
+dist/
+graphify-out/
+.claude/settings.local.json
+.DS_Store
+*.tsbuildinfo
+.idea/

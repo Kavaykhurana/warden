@@ -1,0 +1,58 @@
+@import "tailwindcss";
+@import "./tokens.css" layer(components);
+
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-parchment: #fefffc;
+  --color-paper: #ffffff;
+  --color-linen: #f9faf7;
+  --color-ink-black: #171717;
+  --color-graphite: #2c2c2c;
+  --color-charcoal: #444141;
+  --color-ash: #646464;
+  --color-fog: #b4b8b4;
+  --color-mist: #dee2de;
+  --color-twilight: #282834;
+  --color-dusk: #1f1f29;
+  --color-signal-blue: #41a1cf;
+  --color-signal-ink: #0077b3;
+  --color-cerulean: #0081c0;
+  --color-ember: #a5462b;
+  --color-moss: #3f6b3b;
+  --font-serif: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+  --text-display: clamp(38px, 2.6vw + 22px, 54px);
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.02em;
+  --text-heading-lg: clamp(34px, 2.2vw + 20px, 48px);
+  --text-heading-lg--line-height: 1.1;
+  --text-heading-lg--letter-spacing: -0.02em;
+  --text-heading: clamp(30px, 1.6vw + 20px, 40px);
+  --text-heading--line-height: 1.1;
+  --text-heading--letter-spacing: -0.02em;
+  --text-heading-sm: clamp(22px, 0.8vw + 17px, 27px);
+  --text-heading-sm--line-height: 1.5;
+  --text-heading-sm--letter-spacing: -0.04em;
+  --text-subheading: 18px;
+  --text-subheading--line-height: 1.3;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-body-sm: 15px;
+  --text-body-sm--line-height: 1.4;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.3;
+  --radius-tag: 4px;
+  --radius-btn: 8px;
+  --radius-card: 12px;
+  --radius-diagram: 16px;
+  --radius-surface: 24px;
+  --radius-pill: 50px;
+  --shadow-card: rgba(0,0,0,0.08) 0px 1px 1px 0px, rgba(0,0,0,0.08) 0px 4px 5px 0px;
+  --shadow-diagram: rgba(0,0,0,0.05) 0px 1px 8px 0px;
+  --breakpoint-md: 860px;
+}
+
+html, body, #root { height: 100%; }
+body { background: var(--color-parchment); }
