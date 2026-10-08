@@ -13,6 +13,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestValueException;
@@ -125,6 +126,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> unexpected(Exception ex) {
+        // Any other Spring MVC client error (415 wrong Content-Type, 406, missing parts, ...) is the caller's
+        // mistake, not a server fault: answer 4xx in the contract shape instead of a logged 500.
+        if (ex instanceof ErrorResponse framework && framework.getStatusCode().is4xxClientError()) {
+            int status = framework.getStatusCode().value();
+            if (status == 406) {
+                return ResponseEntity.status(406).build();
+            }
+            return error(400, ErrorCode.VALIDATION_FAILED, status == 415
+                    ? "Send the request body as JSON." : "This request isn't valid.");
+        }
         log.error("Unhandled error (request {})", MDC.get("requestId"), ex);
         return error(500, ErrorCode.INTERNAL, "Something went wrong on our side. Try again.");
     }

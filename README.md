@@ -170,7 +170,7 @@ Swagger UI: <http://localhost:8080/swagger-ui.html> (disabled in the `prod` prof
 ### Tests
 
 ```sh
-cd backend && ./mvnw verify            # 52 unit + 80 integration tests; needs Docker for Testcontainers
+cd backend && ./mvnw verify            # 54 unit + 81 integration tests; needs Docker for Testcontainers
 cd backend && ./mvnw verify -Plive     # adds the live Gemini red-team test (uses GEMINI_API_KEY)
 cd frontend && npm run typecheck && npm run lint && npm run lint:style && npm run build
 ```

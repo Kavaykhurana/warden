@@ -14,12 +14,18 @@ public final class Text {
         return trimmed.length() >= min && trimmed.length() <= max;
     }
 
+    /** At most {@code max} UTF-16 units, cut on a character boundary; NUL characters removed. */
     public static String truncate(String value, int max) {
         if (value == null) {
             return "";
         }
         String clean = value.replace("\u0000", "");
-        return clean.length() <= max ? clean : clean.substring(0, max);
+        if (clean.length() <= max) {
+            return clean;
+        }
+        // Never keep half of a surrogate pair (emoji): it can't be encoded and would be stored as '?'.
+        int end = Character.isHighSurrogate(clean.charAt(max - 1)) ? max - 1 : max;
+        return clean.substring(0, end);
     }
 
     /** Empty or blank becomes null — used for optional notes. */

@@ -106,6 +106,11 @@ public class ChatService {
         }
     }
 
+    /** True while a reply for this conversation is being written (its actions are not saved yet). */
+    public boolean isReplying(UUID conversationId) {
+        return inFlight.contains(conversationId);
+    }
+
     private ChatTurn respond(UserDto user, UUID userId, UUID conversationId, String text) {
         GuardResult guard = promptGuard.assess(text);
         Map<String, String> guardDetails = Map.of("source", "user", "score", guard.scoreText(),

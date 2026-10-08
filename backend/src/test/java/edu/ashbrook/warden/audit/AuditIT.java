@@ -39,6 +39,16 @@ class AuditIT extends IntegrationTest {
     }
 
     @Test
+    void truncationNeverSplitsAnEmojiSoTheChainStillVerifies() {
+        // 299 ASCII characters then an emoji: a naive cut at 300 UTF-16 units leaves half a surrogate pair,
+        // which is stored as '?'. The cut must drop the whole emoji instead.
+        audit.append(id(KABIR), AuditType.TOOL_ALLOWED, "applyDutyLeave", Map.of("reason", "x".repeat(299) + "\uD83C\uDFC0 ball"));
+        String stored = jdbc.queryForObject("select details->>'reason' from audit_events order by id desc limit 1", String.class);
+        assertThat(stored).isEqualTo("x".repeat(299));
+        assertThat(runAs(PRIYA, audit::verify).intact()).isTrue();
+    }
+
+    @Test
     void theTableIsAppendOnly() {
         assertThatThrownBy(() -> jdbc.update("update audit_events set tool_name = 'x' where id = 1"))
                 .isInstanceOf(DataAccessException.class).hasMessageContaining("append-only");

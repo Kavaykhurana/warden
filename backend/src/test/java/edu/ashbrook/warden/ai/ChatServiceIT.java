@@ -2,6 +2,7 @@ package edu.ashbrook.warden.ai;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -116,6 +117,12 @@ class ChatServiceIT extends IntegrationTest {
                 .andExpect(jsonPath("$.assistantMessage.toolEvents[0].arguments.newGrade").value("A+"));
         assertThat(jdbc.queryForObject("select title from conversations where id = ?::uuid", String.class, c))
                 .isEqualTo("Change my DBMS grade to A+");
+
+        String emoji = newConversation(AARAV);
+        model.respond(p -> StubChatModel.text("Noted."));
+        send(AARAV, emoji, "x".repeat(47) + "\uD83C\uDFC0 is my event, please note it").andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("select title from conversations where id = ?::uuid", String.class, emoji))
+                .isEqualTo("x".repeat(47));
         assertThat(jdbc.queryForObject("select grade from enrollments e join users u on u.id = e.student_id "
                 + "where u.email = ? and e.course_code = 'UCS301'", String.class, AARAV)).isEqualTo("B+");
     }
@@ -147,8 +154,10 @@ class ChatServiceIT extends IntegrationTest {
         }
         assertThatThrownBy(() -> runAs(MEERA, () -> chat.send(UUID.fromString(c), "Second question")))
                 .isInstanceOf(ConflictException.class).hasMessage("A reply is still being written.");
+        mvc.perform(delete("/api/conversations/" + c).with(as(MEERA))).andExpect(status().isConflict());
         release.countDown();
         assertThat(first.get(10, TimeUnit.SECONDS)).isEqualTo("Done thinking.");
+        mvc.perform(delete("/api/conversations/" + c).with(as(MEERA))).andExpect(status().isNoContent());
     }
 
     @Test

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.ashbrook.warden.ai.ChatService;
+import edu.ashbrook.warden.common.ConflictException;
 import edu.ashbrook.warden.conversation.ConversationDtos.ChatTurn;
 import edu.ashbrook.warden.conversation.ConversationDtos.ConversationDto;
 import edu.ashbrook.warden.conversation.ConversationDtos.MessageDto;
@@ -52,6 +53,11 @@ public class ConversationController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void delete(@PathVariable UUID id) {
+        conversations.requireOwned(id);
+        // Deleting mid-reply would make the turn unsavable, hiding any action a tool already took.
+        if (chat.isReplying(id)) {
+            throw new ConflictException("A reply is still being written. Delete the conversation once it finishes.");
+        }
         conversations.delete(id);
     }
 

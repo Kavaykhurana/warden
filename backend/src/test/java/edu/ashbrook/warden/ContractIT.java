@@ -272,5 +272,9 @@ class ContractIT extends IntegrationTest {
         assertStringMap(invalid.get("fieldErrors"), "ApiError.fieldErrors");
         assertShape(call(post("/api/duty-leave").with(as(AARAV)).contentType(MediaType.APPLICATION_JSON)
                 .content("{not json"), status().isBadRequest()), API_ERROR, "ApiError(400 unreadable)");
+        JsonNode wrongType = call(post("/api/auth/login").with(fromIp("10.1.0.9")).contentType(MediaType.TEXT_PLAIN)
+                .content("email=a"), status().isBadRequest());
+        assertShape(wrongType, API_ERROR, "ApiError(400 wrong content type)");
+        assertThat(wrongType.get("message").asString()).isEqualTo("Send the request body as JSON.");
     }
 }
